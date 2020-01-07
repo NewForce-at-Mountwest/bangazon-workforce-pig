@@ -43,9 +43,9 @@ namespace BangazonWorkforce.Controllers
             FROM Computer c
         ";
                     SqlDataReader reader = cmd.ExecuteReader();
-
+                    //create a list of computers
                     List<Computer> computers = new List<Computer>();
-
+                    //create a variable for null entry
                     DateTime? nullDateTime = null;
 
                     while (reader.Read())
@@ -59,7 +59,7 @@ namespace BangazonWorkforce.Controllers
                             DecomissionDate = reader.IsDBNull(reader.GetOrdinal("DecomissionDate")) ? nullDateTime : reader.GetDateTime(reader.GetOrdinal("DecomissionDate"))
 
                     };
-
+                        //add computer to the list
                         computers.Add(computer);
                     }
 
@@ -70,7 +70,7 @@ namespace BangazonWorkforce.Controllers
             }
         }
 
-        // GET: Computer/Details/5
+        // GET: Computer/Details/id
         public ActionResult Details(int id)
         {
             using (SqlConnection conn = Connection)
@@ -87,9 +87,9 @@ namespace BangazonWorkforce.Controllers
             FROM Computer c WHERE c.Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
-
+                    //variable for null
                     DateTime? nullDateTime = null;
-
+                    //new computer instance
                     Computer computer = null;
 
                     if (reader.Read())
@@ -112,6 +112,7 @@ namespace BangazonWorkforce.Controllers
         }
 
         // GET: Computer/Create
+        //NEW FORM
         public ActionResult Create()
         {
             return View();
@@ -150,6 +151,7 @@ namespace BangazonWorkforce.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
+                        //bring up DELETE View
                         cmd.CommandText = @"
             SELECT c.Id,
                 c.Make,
@@ -159,11 +161,11 @@ namespace BangazonWorkforce.Controllers
             FROM Computer c WHERE c.Id = @id";
                         cmd.Parameters.Add(new SqlParameter("@id", id));
                         SqlDataReader reader = cmd.ExecuteReader();
-
+                        //set the variable for a null entry
                         DateTime? nullDateTime = null;
-
+                        //create new instance for a computer
                         Computer computer = null;
-
+                        
                         if (reader.Read())
                         {
                             computer = new Computer
@@ -198,14 +200,8 @@ namespace BangazonWorkforce.Controllers
                         conn.Open();
                         using (SqlCommand cmd = conn.CreateCommand())
                         {
-                            //    cmd.CommandText = @"DELETE FROM Computer WHERE Id = @id";
-                            //    cmd.Parameters.Add(new SqlParameter("@id", id));
-
-                            //    int rowsAffected = cmd.ExecuteNonQuery();
-
-                            //}
-                            //FIND any instances of connections to other tables
-                            cmd.CommandText = @"SELECT ComputerEmployee.ComputerId FROM ComputerEmployee WHERE ComputerEmployee.Id = @id";
+                        //find out if this computer has any associations to employees in the employeecomputer dataset
+                        cmd.CommandText = @"SELECT ComputerEmployee.ComputerId FROM ComputerEmployee WHERE ComputerEmployee.Id = @id";
 
                             cmd.Parameters.Add(new SqlParameter("@id", id));
                             SqlDataReader reader = cmd.ExecuteReader();
@@ -227,12 +223,9 @@ namespace BangazonWorkforce.Controllers
                             if (rowsAffected > 0)
                             {
                                 return RedirectToAction(nameof(Index));
-                            // new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
                             throw new Exception("No rows affected");
                         }
-
-                        //return RedirectToAction(nameof(Index));
                     }
                 
             }
