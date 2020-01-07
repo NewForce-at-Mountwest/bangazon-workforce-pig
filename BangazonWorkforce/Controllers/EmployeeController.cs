@@ -1,24 +1,112 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using BangazonWorkforce.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace BangazonWorkforce.Controllers
 {
     public class EmployeeController : Controller
     {
+        private readonly IConfiguration _config;
+
+        public EmployeeController(IConfiguration config)
+        {
+            _config = config;
+        }
+
+        public SqlConnection Connection
+        {
+            get
+            {
+                return new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            }
+        }
         // GET: Employee
         public ActionResult Index()
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT  Employee.Id AS 'Id', FirstName, 
+LastName, Department.Name AS 'DeptName', isSupervisor  
+FROM Employee  
+ JOIN Department ON DepartmentId = Department.Id
+";
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    List<Employee> employees = new List<Employee>();
+
+                    while (reader.Read())
+                    {
+                       Employee employee = new Employee
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                            IsSuperVisor = reader.GetBoolean(reader.GetOrdinal("isSupervisor")),
+                            CurrentDepartment = new Department
+                            {
+                                Name = reader.GetString(reader.GetOrdinal("DeptName"))
+                            }
+                        };
+                        employees.Add(employee);
+                    }
+                    reader.Close();
+
+                    return View(employees);
+                }
+            }
         }
 
         // GET: Employee/Details/5
         public ActionResult Details(int id)
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT  Employee.Id AS 'Id', FirstName, 
+LastName, Department.Name AS 'DeptName', isSupervisor ,  Computer.Make AS 'Make', Computer.Manufacturer AS 'Manufacturer'
+FROM Employee  
+ JOIN Department ON DepartmentId = Department.Id Join ComputerEmployee ON Employee.Id = EmployeeId JOIN Computer ON Computer.Id = ComputerId
+";
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    Employee employee = null;
+
+                    if (reader.Read())
+                    {
+                        employee = new Employee
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                            IsSuperVisor = reader.GetBoolean(reader.GetOrdinal("isSupervisor")),
+                            CurrentDepartment = new Department
+                            {
+                                Name = reader.GetString(reader.GetOrdinal("DeptName"))
+                            },
+                            CurrentComputer = new Computer
+                            {
+                                Make = reader.GetString(reader.GetOrdinal("Make")),
+                                Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                            }
+                        };
+                    }
+                    reader.Close();
+
+                    return View(employee);
+                }
+            }
         }
 
         // GET: Employee/Create
