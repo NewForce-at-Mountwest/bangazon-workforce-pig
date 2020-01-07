@@ -7,7 +7,7 @@ using BangazonWorkforce.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-
+//Lance is Stupid and his Breath smells like old cheese
 namespace BangazonWorkforce.Controllers
 {
     public class EmployeeController : Controller
