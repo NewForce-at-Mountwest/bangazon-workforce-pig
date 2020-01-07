@@ -112,30 +112,34 @@ namespace BangazonWorkforce.Controllers
         }
 
         // POST: Departments/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> Create(Department department)
+        {
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"INSERT INTO Department (Name, Budget)
+                                                    VALUES (@Name, @Budget)";
 
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<ActionResult> Create(CreateStudentViewModel model)
-        //{
-        //    using (SqlConnection conn = Connection)
-        //    {
-        //        conn.Open();
-        //        using (SqlCommand cmd = conn.CreateCommand())
-        //        {
-        //            cmd.CommandText = @"INSERT INTO Student
-        //        ( FirstName, LastName, SlackHandle, CohortId )
-        //        VALUES
-        //        ( @firstName, @lastName, @slackHandle, @cohortId )";
-        //            cmd.Parameters.Add(new SqlParameter("@firstName", model.student.FirstName));
-        //            cmd.Parameters.Add(new SqlParameter("@lastName", model.student.LastName));
-        //            cmd.Parameters.Add(new SqlParameter("@slackHandle", model.student.SlackHandle));
-        //            cmd.Parameters.Add(new SqlParameter("@cohortId", model.student.CohortId));
-        //            cmd.ExecuteNonQuery();
+                        cmd.Parameters.Add(new SqlParameter("@Name", department.Name));
+                        cmd.Parameters.Add(new SqlParameter("@Budget", department.Budget));
 
-        //            return RedirectToAction(nameof(Index));
-        //        }
-        //    }
-        //}
+                        await cmd.ExecuteNonQueryAsync();
+
+                        return RedirectToAction(nameof(Index));
+                    }
+                }
+            }
+            catch
+            {
+                return View();
+            }
+        }
 
         // GET: Departments/Edit/5
         public ActionResult Edit(int id)
