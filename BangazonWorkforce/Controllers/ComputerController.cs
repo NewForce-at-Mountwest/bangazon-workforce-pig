@@ -39,8 +39,9 @@ namespace BangazonWorkforce.Controllers
                 c.Make,
                 c.Manufacturer,
                 c.PurchaseDate,
-                c.DecomissionDate
+                c.DecomissionDate, Employee.FirstName AS 'FirstName', Employee.LastName AS 'LastName'
             FROM Computer c
+JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId JOIN Employee ON ComputerEmployee.EmployeeId=Employee.Id
         ";
                     SqlDataReader reader = cmd.ExecuteReader();
                     //create a list of computers
@@ -56,9 +57,11 @@ namespace BangazonWorkforce.Controllers
                             Make = reader.GetString(reader.GetOrdinal("Make")),
                             Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer")),
                             PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
-                            DecomissionDate = reader.IsDBNull(reader.GetOrdinal("DecomissionDate")) ? nullDateTime : reader.GetDateTime(reader.GetOrdinal("DecomissionDate"))
+                            DecomissionDate = reader.IsDBNull(reader.GetOrdinal("DecomissionDate")) ? nullDateTime : reader.GetDateTime(reader.GetOrdinal("DecomissionDate")),
+                            CurrentEmployee = new Employee { FirstName = reader.GetString(reader.GetOrdinal("FirstName")), LastName = reader.GetString(reader.GetOrdinal("LastName")) }
 
-                    };
+
+                        };
                         //add computer to the list
                         computers.Add(computer);
                     }

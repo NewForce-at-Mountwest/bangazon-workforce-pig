@@ -27,28 +27,35 @@
             <th>
                 @Html.DisplayNameFor(model => model.Manufacturer)
             </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CurrentEmployee)
+            </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
 @foreach (var item in Model) {
         <tr onclick="location.href = '@Url.Action("Details", new { id=item.Id })'">
-                <td>
-                    @Html.DisplayFor(modelItem => item.Id)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.PurchaseDate)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.DecomissionDate)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Make)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Manufacturer)
-                </td>
-            </tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PurchaseDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DecomissionDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Make)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Manufacturer)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CurrentEmployee.FirstName)
+                @Html.DisplayFor(modelItem => item.CurrentEmployee.LastName)
+            </td>
+        </tr>
 }
     </tbody>
 </table>
