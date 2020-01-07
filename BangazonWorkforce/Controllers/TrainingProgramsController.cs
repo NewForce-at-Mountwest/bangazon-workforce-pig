@@ -79,7 +79,8 @@ namespace BangazonWorkforce.Controllers
                         SELECT
                             Id, Name, StartDate, EndDate, MaxAttendees
                         FROM TrainingProgram
-                        WHERE Id = @id";
+                        WHERE Id = @id
+                       ";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
 
