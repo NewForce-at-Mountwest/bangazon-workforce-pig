@@ -7,7 +7,6 @@ using BangazonWorkforce.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-
 namespace BangazonWorkforce.Controllers
 {
     public class EmployeeController : Controller
@@ -34,32 +33,41 @@ namespace BangazonWorkforce.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT  Employee.Id AS 'Id', FirstName, 
-LastName, Department.Name AS 'DeptName', isSupervisor  
-FROM Employee  
- JOIN Department ON DepartmentId = Department.Id
-";
+                    string query = @"SELECT Employee.Id AS 'Id', DepartmentId, Department.Budget AS 'Budget', Department.Id AS 'DeptId', FirstName,  LastName, isSupervisor,  Department.Name AS 'DeptName' FROM Employee JOIN Department ON DepartmentId = Department.Id ";
+                    cmd.CommandText = query;
                     SqlDataReader reader = cmd.ExecuteReader();
-
                     List<Employee> employees = new List<Employee>();
-
                     while (reader.Read())
                     {
-                       Employee employee = new Employee
+
+                        int idColumnPosition = reader.GetOrdinal("Id");
+
+                        int idValue = reader.GetInt32(idColumnPosition);
+                        int DepartmentIdColumnPosition = reader.GetOrdinal("DepartmentId");
+                        int DepartmentIdValue = reader.GetInt32(DepartmentIdColumnPosition);
+
+                        int FirstNameColumnPosition = reader.GetOrdinal("FirstName");
+                        string FirstNameValue = reader.GetString(FirstNameColumnPosition);
+                        int LastNameColumnPosition = reader.GetOrdinal("LastName");
+                        string LastNameValue = reader.GetString(LastNameColumnPosition);
+                        bool IsSupervisorValue = reader.GetBoolean(reader.GetOrdinal("IsSupervisor"));
+                        Employee employee = new Employee
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                            IsSuperVisor = reader.GetBoolean(reader.GetOrdinal("isSupervisor")),
-                            CurrentDepartment = new Department
-                            {
-                                Name = reader.GetString(reader.GetOrdinal("DeptName"))
+                            Id = idValue,
+                            FirstName = FirstNameValue,
+                            LastName = LastNameValue,
+                            DepartmentId = DepartmentIdValue,
+                            IsSuperVisor = IsSupervisorValue,
+                            CurrentDepartment = new Department{
+                                Name = reader.GetString(reader.GetOrdinal("DeptName")),
+                                Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
+                                Id = reader.GetInt32(reader.GetOrdinal("DeptId"))
+
                             }
                         };
                         employees.Add(employee);
                     }
                     reader.Close();
-
                     return View(employees);
                 }
             }
@@ -73,44 +81,25 @@ FROM Employee
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT  Employee.Id AS 'Id', FirstName, 
-LastName, Department.Name AS 'DeptName', isSupervisor ,  Computer.Make AS 'Make', TrainingProgram.Id AS 'TPID', TrainingProgram.Name AS 'TrainingName', Computer.Manufacturer AS 'Manufacturer'
-FROM Employee  
- JOIN Department ON DepartmentId = Department.Id Join ComputerEmployee ON Employee.Id = ComputerEmployee.EmployeeId JOIN Computer ON Computer.Id = ComputerId
-Join EmployeeTraining ON Employee.Id = EmployeeTraining.EmployeeId Join TrainingProgram ON TrainingProgram.Id = TrainingProgramId";
-                    cmd.Parameters.Add(new SqlParameter("@id", id));
+                    cmd.CommandText = @"SELECT  Employee.Id AS 'Id', FirstName, DepartmentId, LastName, Department.Name AS 'DeptName', isSupervisor
+FROM Employee JOIN Department ON DepartmentId = Department.Id WHERE Employee.Id = @Id";
+                    cmd.Parameters.Add(new SqlParameter("@Id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
-
                     Employee employee = null;
                     if (reader.Read())
                     {
-                      
-                        TrainingProgram training = new TrainingProgram
-                        {
-                            Name = reader.GetString(reader.GetOrdinal("TrainingName"))
-                        };
                         employee = new Employee
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                             LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                            DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
                             IsSuperVisor = reader.GetBoolean(reader.GetOrdinal("isSupervisor")),
                             CurrentDepartment = new Department
                             {
                                 Name = reader.GetString(reader.GetOrdinal("DeptName"))
-                            },
-                            CurrentComputer = new Computer
-                            {
-                                Make = reader.GetString(reader.GetOrdinal("Make")),
-                                Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
-                            },
-                          
-                        
-                           
+                            }
                         };
-                      
-                            employee.TrainingPrograms.Add(training);
-                        
                     }
                     reader.Close();
 
