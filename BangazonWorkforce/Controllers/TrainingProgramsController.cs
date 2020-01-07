@@ -109,15 +109,15 @@ namespace BangazonWorkforce.Controllers
         // GET: TrainingProgram/Create
         public ActionResult Create()
         {
-            CreateProgramViewModel programViewModel = new CreateProgramViewModel(_config.GetConnectionString("DefaultConnection"));
-            return View(programViewModel);
+            TrainingProgram trainingProgram = new TrainingProgram();
+            return View(trainingProgram);
         }
 
         // POST: TrainingProgram/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
 
-        public ActionResult Create(CreateProgramViewModel model)
+        public ActionResult Create(TrainingProgram trainingProgram)
         {
             using (SqlConnection conn = Connection)
             {
@@ -128,10 +128,10 @@ namespace BangazonWorkforce.Controllers
                 ( Name, StartDate, EndDate, MaxAttendees )
                 VALUES
                 ( @Name, @StartDate, @EndDate, @MaxAttendees )";
-                    cmd.Parameters.Add(new SqlParameter("@firstName", model.TrainingProgram.Name));
-                    cmd.Parameters.Add(new SqlParameter("@lastName", model.TrainingProgram.StartDate));
-                    cmd.Parameters.Add(new SqlParameter("@slackHandle", model.TrainingProgram.EndDate));
-                    cmd.Parameters.Add(new SqlParameter("@cohortId", model.TrainingProgram.MaxAttendees));
+                    cmd.Parameters.Add(new SqlParameter("@Name", trainingProgram.Name));
+                    cmd.Parameters.Add(new SqlParameter("@StartDate", trainingProgram.StartDate));
+                    cmd.Parameters.Add(new SqlParameter("@EndDate", trainingProgram.EndDate));
+                    cmd.Parameters.Add(new SqlParameter("@MaxAttendees", trainingProgram.MaxAttendees));
                     cmd.ExecuteNonQuery();
 
                     return RedirectToAction(nameof(Index));
