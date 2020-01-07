@@ -28,12 +28,25 @@
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.CurrentDepartment.Name)
         </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.CurrentComputer)
+        </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.CurrentComputer.Make)
+            @Html.DisplayFor(model => model.CurrentComputer.Make)    @Html.DisplayFor(model => model.CurrentComputer.Manufacturer)
         </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.TrainingPrograms)
+        </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.CurrentComputer.Manufacturer)
+            @foreach (var item in Model.TrainingPrograms)
+            {
+                <div>
+                    @item.Name
+                    <hr />
+                </div>
+            }
         </dd>
+
     </dl>
 </div>
 <div>

@@ -74,17 +74,21 @@ FROM Employee
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"SELECT  Employee.Id AS 'Id', FirstName, 
-LastName, Department.Name AS 'DeptName', isSupervisor ,  Computer.Make AS 'Make', Computer.Manufacturer AS 'Manufacturer'
+LastName, Department.Name AS 'DeptName', isSupervisor ,  Computer.Make AS 'Make', TrainingProgram.Id AS 'TPID', TrainingProgram.Name AS 'TrainingName', Computer.Manufacturer AS 'Manufacturer'
 FROM Employee  
- JOIN Department ON DepartmentId = Department.Id Join ComputerEmployee ON Employee.Id = EmployeeId JOIN Computer ON Computer.Id = ComputerId
-";
+ JOIN Department ON DepartmentId = Department.Id Join ComputerEmployee ON Employee.Id = ComputerEmployee.EmployeeId JOIN Computer ON Computer.Id = ComputerId
+Join EmployeeTraining ON Employee.Id = EmployeeTraining.EmployeeId Join TrainingProgram ON TrainingProgram.Id = TrainingProgramId";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
 
                     Employee employee = null;
-
                     if (reader.Read())
                     {
+                      
+                        TrainingProgram training = new TrainingProgram
+                        {
+                            Name = reader.GetString(reader.GetOrdinal("TrainingName"))
+                        };
                         employee = new Employee
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
@@ -99,8 +103,14 @@ FROM Employee
                             {
                                 Make = reader.GetString(reader.GetOrdinal("Make")),
                                 Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
-                            }
+                            },
+                          
+                        
+                           
                         };
+                      
+                            employee.TrainingPrograms.Add(training);
+                        
                     }
                     reader.Close();
 
