@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using BangazonWorkforce.Models;
+using BangazonWorkforce.Models.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -118,13 +119,19 @@ JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId JOIN Employee ON Compu
         //NEW FORM
         public ActionResult Create()
         {
-            return View();
+            // Create a new instance of a CreateComputerViewModel
+            // If we want to get the employees, we need to use the constructor that's expecting a connection string. 
+            // When we create this instance, the constructor will run and get the employees.
+            CreateComputerViewModel computerViewModel = new CreateComputerViewModel(_config.GetConnectionString("DefaultConnection"));
+
+            // Once we've created it, we can pass it to the view
+            return View(computerViewModel);
         }
 
         // POST: Computer/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(Computer computer)
+        public ActionResult Create(CreateComputerViewModel model)
         {
             {
                 using (SqlConnection conn = Connection)
@@ -132,11 +139,21 @@ JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId JOIN Employee ON Compu
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"INSERT INTO Computer
-                            ( Make, Manufacturer, PurchaseDate ) VALUES ( @Make, @Manufacturer, @PurchaseDate )";
-                        cmd.Parameters.Add(new SqlParameter("@Make", computer.Make));
-                        cmd.Parameters.Add(new SqlParameter("@Manufacturer", computer.Manufacturer));
-                        cmd.Parameters.Add(new SqlParameter("@PurchaseDate", computer.PurchaseDate));
+                        cmd.CommandText = @"INSERT INTO Computer ( Make, Manufacturer, PurchaseDate) 
+                        OUTPUT INSERTED.Id
+                        VALUES ( @Make, @Manufacturer, @PurchaseDate)";
+                        cmd.Parameters.Add(new SqlParameter("@Make", model.computer.Make));
+                        cmd.Parameters.Add(new SqlParameter("@Manufacturer", model.computer.Manufacturer));
+                        cmd.Parameters.Add(new SqlParameter("@PurchaseDate", model.computer.PurchaseDate));
+                        cmd.ExecuteNonQuery();
+                        int newId = (int)cmd.ExecuteScalar();
+                        model.computer.Id = newId;
+
+                        cmd.CommandText = @"INSERT INTO ComputerEmployee ( EmployeeId, ComputerId, AssignDate, UnassignDate) 
+                        VALUES ( @EmployeeId, @ComputerId, @AssignDate, @UnassignDate)";
+                        cmd.Parameters.Add(new SqlParameter("@EmployeeId", model.computer.CurrentEmployee.Id));
+                        cmd.Parameters.Add(new SqlParameter("@ComputerId", newId));
+                        cmd.Parameters.Add(new SqlParameter("@AssignDate", DateTime.Now));
                         cmd.ExecuteNonQuery();
 
                         return RedirectToAction(nameof(Index));
