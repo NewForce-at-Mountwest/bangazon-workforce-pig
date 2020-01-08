@@ -150,10 +150,11 @@ JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId JOIN Employee ON Compu
                         model.computer.Id = newId;
 
                         cmd.CommandText = @"INSERT INTO ComputerEmployee ( EmployeeId, ComputerId, AssignDate, UnassignDate) 
-                        VALUES ( @EmployeeId, @ComputerId, @AssignDate, @UnassignDate)";
+                        VALUES ( @EmployeeId, @ComputerId, @AssignDate, NULL)";
                         cmd.Parameters.Add(new SqlParameter("@EmployeeId", model.computer.CurrentEmployee.Id));
                         cmd.Parameters.Add(new SqlParameter("@ComputerId", newId));
                         cmd.Parameters.Add(new SqlParameter("@AssignDate", DateTime.Now));
+                        //cmd.Parameters.Add(new SqlParameter("@UnassignDate", null));
                         cmd.ExecuteNonQuery();
 
                         return RedirectToAction(nameof(Index));
@@ -258,7 +259,7 @@ JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId JOIN Employee ON Compu
                 }
                 else
                 {
-                    return View();
+                    return RedirectToAction(nameof(Index));
                 }
                
             }

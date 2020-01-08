@@ -53,7 +53,7 @@ namespace BangazonWorkforce.Models.ViewModels
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT Employee.Id, Employee.LastName FROM Employee JOIN ComputerEmployee ON Employee.Id=ComputerEmployee.EmployeeId WHERE ComputerEmployee.EmployeeId IS NULL";
+                    cmd.CommandText = @"SELECT Employee.Id, Employee.LastName FROM Employee LEFT JOIN ComputerEmployee ON Employee.Id=ComputerEmployee.EmployeeId WHERE NOT EXISTS (SELECT ComputerEmployee.Id FROM ComputerEmployee WHERE ComputerEmployee.EmployeeId=Employee.Id)";
                     SqlDataReader reader = cmd.ExecuteReader();
 
                     List<Employee> employees = new List<Employee>();
