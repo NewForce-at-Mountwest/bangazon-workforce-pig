@@ -58,31 +58,31 @@ namespace BangazonWorkforce.Models.ViewModels
                 {
                     cmd.CommandText = @"SELECT  Employee.Id AS 'Id', FirstName,  DepartmentId,
 LastName, Department.Name AS 'DeptName', isSupervisor, ComputerId
-FROM Employee JOIN ComputerEmployee ON Employee.Id = EmployeeId 
+FROM Employee FULL JOIN ComputerEmployee ON Employee.Id = EmployeeId 
  JOIN Department ON DepartmentId = Department.Id WHERE Employee.Id = @Id";
                     cmd.Parameters.Add(new SqlParameter("@Id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
                     Employee employee = null;
                     if (reader.Read())
                     {
-
-                        employee = new Employee
-                        {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                            DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
-
-                            CurrentDepartment = new Department
+                      
+                            employee = new Employee
                             {
-                                Name = reader.GetString(reader.GetOrdinal("DeptName"))
-                            },
-                            CurrentComputer = new Computer
-                            {
-                                Id = reader.GetInt32(reader.GetOrdinal("ComputerId"))
-                            }
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
 
-                        };
+                                CurrentDepartment = new Department
+                                {
+                                    Name = reader.GetString(reader.GetOrdinal("DeptName"))
+                                },
+                                CurrentComputer = new Computer
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("ComputerId"))
+                                }
 
+                            };
+           
 
 
                     }
