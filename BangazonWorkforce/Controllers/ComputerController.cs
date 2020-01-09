@@ -42,7 +42,7 @@ namespace BangazonWorkforce.Controllers
                 c.PurchaseDate,
                 c.DecomissionDate, Employee.FirstName AS 'FirstName', Employee.LastName AS 'LastName'
             FROM Computer c
-FULL JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId FULL JOIN Employee ON ComputerEmployee.EmployeeId=Employee.Id
+FULL JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId LEFT JOIN Employee ON ComputerEmployee.EmployeeId=Employee.Id
         ";
                     SqlDataReader reader = cmd.ExecuteReader();
                     //create a list of computers
