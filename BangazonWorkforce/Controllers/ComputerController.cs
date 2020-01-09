@@ -137,6 +137,7 @@ FULL JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId LEFT JOIN Employe
         public ActionResult Create(CreateComputerViewModel model)
         {
             {
+                int newId = 0;
                 using (SqlConnection conn = Connection)
                 {
                     conn.Open();
@@ -149,19 +150,25 @@ FULL JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId LEFT JOIN Employe
                         cmd.Parameters.Add(new SqlParameter("@Make", model.computer.Make));
                         cmd.Parameters.Add(new SqlParameter("@Manufacturer", model.computer.Manufacturer));
                         cmd.Parameters.Add(new SqlParameter("@PurchaseDate", model.computer.PurchaseDate));
-                        cmd.ExecuteNonQuery();
-                        int newId = (int)cmd.ExecuteScalar();
-                        model.computer.Id = newId;
+                       newId = (int)cmd.ExecuteScalar();
+
+                    }
+
+                    using(SqlCommand cmd = conn.CreateCommand())
+                    {
                         //if employee is assigned, insert an entry in DB computeremployee table
                         if (model.computer.CurrentEmployee.Id != 0)
                         {
-                            cmd.CommandText += @" INSERT INTO ComputerEmployee ( EmployeeId, ComputerId, AssignDate, UnassignDate) 
+                            cmd.CommandText = @"INSERT INTO ComputerEmployee ( EmployeeId, ComputerId, AssignDate, UnassignDate) 
                         VALUES ( @EmployeeId, @ComputerId, @AssignDate, NULL)";
                             cmd.Parameters.Add(new SqlParameter("@EmployeeId", model.computer.CurrentEmployee.Id));
                             cmd.Parameters.Add(new SqlParameter("@ComputerId", newId));
                             cmd.Parameters.Add(new SqlParameter("@AssignDate", DateTime.Now));
-                            cmd.ExecuteNonQuery();
-                        }
+                        
+                        cmd.ExecuteNonQuery();
+                            }
+
+
                         return RedirectToAction(nameof(Index));
                     }
                 }
