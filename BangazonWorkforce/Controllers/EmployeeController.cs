@@ -7,6 +7,7 @@ using BangazonWorkforce.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+//Lance is Stupid and his Breath smells like old cheese
 namespace BangazonWorkforce.Controllers
 {
     public class EmployeeController : Controller
@@ -81,11 +82,8 @@ namespace BangazonWorkforce.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT  Employee.Id AS 'Id', FirstName, 
-LastName, Department.Name AS 'DeptName', isSupervisor ,  Computer.Make AS 'Make', TrainingProgram.Id AS 'TPID', TrainingProgram.Name AS 'TrainingName', Computer.Manufacturer AS 'Manufacturer'
-FROM Employee  
- JOIN Department ON DepartmentId = Department.Id Join ComputerEmployee ON Employee.Id = ComputerEmployee.EmployeeId JOIN Computer ON Computer.Id = ComputerId
-Join EmployeeTraining ON Employee.Id = EmployeeTraining.EmployeeId Join TrainingProgram ON TrainingProgram.Id = TrainingProgramId WHERE Employee.Id = @Id ";
+                    cmd.CommandText = @"SELECT  Employee.Id AS 'Id', FirstName, DepartmentId, LastName, Department.Name AS 'DeptName', isSupervisor 
+FROM Employee JOIN Department ON DepartmentId = Department.Id WHERE Employee.Id = @Id";
                     cmd.Parameters.Add(new SqlParameter("@Id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
                     Employee employee = null;
@@ -96,26 +94,13 @@ Join EmployeeTraining ON Employee.Id = EmployeeTraining.EmployeeId Join Training
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                             LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                            DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
                             IsSuperVisor = reader.GetBoolean(reader.GetOrdinal("isSupervisor")),
-                            CurrentComputer = new Computer
-                            {
-                                Make = reader.GetString(reader.GetOrdinal("Make")),
-                                Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
-                            },
                             CurrentDepartment = new Department
                             {
                                 Name = reader.GetString(reader.GetOrdinal("DeptName"))
                             }
-                       
                         };
-                        TrainingProgram training = new TrainingProgram
-                        {
-                            Name = reader.GetString(reader.GetOrdinal("TrainingName"))
-                        };
-                   if(     employee.TrainingPrograms.FirstOrDefault(program => program.Id == reader.GetInt32(reader.GetOrdinal("TPID")))== null)
-                        {
-                            employee.TrainingPrograms.Add(training);
-                        }
                     }
                     reader.Close();
 
