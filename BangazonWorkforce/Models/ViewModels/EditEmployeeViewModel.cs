@@ -33,7 +33,7 @@ namespace BangazonWorkforce.Models.ViewModels
             Computers = GetAllComputers()
            .Select(computer => new SelectListItem()
            {
-               Text = computer.Manufacturer,
+               Text = computer.Id.ToString(),
                Value = computer.Id.ToString(),
                Selected = computer.Id == computer.Id
            })
@@ -65,7 +65,8 @@ FROM Employee FULL JOIN ComputerEmployee ON Employee.Id = EmployeeId
                     Employee employee = null;
                     if (reader.Read())
                     {
-                      
+                      if(reader.IsDBNull(reader.GetOrdinal("ComputerId"))== false)
+                        {
                             employee = new Employee
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
@@ -82,6 +83,23 @@ FROM Employee FULL JOIN ComputerEmployee ON Employee.Id = EmployeeId
                                 }
 
                             };
+                        }
+                        else
+                        {
+                            employee = new Employee
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
+
+                                CurrentDepartment = new Department
+                                {
+                                    Name = reader.GetString(reader.GetOrdinal("DeptName"))
+                                }
+
+                            };
+                        }
+                          
            
 
 
