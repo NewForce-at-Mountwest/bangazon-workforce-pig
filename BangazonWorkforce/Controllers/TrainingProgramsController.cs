@@ -82,37 +82,61 @@ namespace BangazonWorkforce.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"
-                        SELECT
-                            Id, Name, StartDate, EndDate, MaxAttendees
-                        FROM TrainingProgram
-                        WHERE Id = @id
-                        LEFT JOIN EmployeeTraining ON EmployeeTraining.TrainingProgramId
-                        
-                       ";
+                    cmd.CommandText = @"SELECT 
+                                        TrainingProgram.Id,
+                                        TrainingProgram.Name,
+                                        TrainingProgram.StartDate,
+                                        TrainingProgram.EndDate,
+                                        TrainingProgram.MaxAttendees,
+                                        EmployeeTraining.Id,
+                                        EmployeeTraining.EmployeeId,
+                                        EmployeeTraining.TrainingProgramId,
+                                        Employee.Id,
+                                        Employee.FirstName,
+                                        Employee.LastName
+                                        FROM TrainingProgram 
+                                        FULL JOIN EmployeeTraining ON EmployeeTraining.TrainingProgramId = EmployeeTraining.Id 
+                                        FULL JOIN Employee ON Employee.Id = EmployeeTraining.EmployeeId
+                                        WHERE TrainingProgram.Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
 
-                    TrainingProgram program = new TrainingProgram();
+                    TrainingProgram program = null;
 
-                    if (reader.Read())
+                    while (reader.Read())
                     {
-                        program = new TrainingProgram
+
+                        if (program == null)
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
-                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
-                            
-                            
+                            program = new TrainingProgram
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                                EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                                MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees")),
+                                Employees = new List<Employee>()
 
+                            };
                         };
-                        
+
+                        // Bring back the list of employees in the detail view
+                        if (!reader.IsDBNull(reader.GetOrdinal("EmployeeId")))
+                        {
+                            Employee employee = new Employee()
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                            };
+
+                            program.Employees.Add(employee);
+
+                        }
                     }
+
+
                     reader.Close();
-
-
                     return View(program);
                 }
             }
@@ -170,7 +194,7 @@ namespace BangazonWorkforce.Controllers
                     SqlDataReader reader = cmd.ExecuteReader();
 
                     TrainingProgram program = new TrainingProgram();
-
+                   
                     if (reader.Read())
                     {
                         program = new TrainingProgram
