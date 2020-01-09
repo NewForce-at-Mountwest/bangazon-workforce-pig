@@ -61,6 +61,7 @@ FULL JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId LEFT JOIN Employe
                             DecomissionDate = reader.IsDBNull(reader.GetOrdinal("DecomissionDate")) ? nullDateTime : reader.GetDateTime(reader.GetOrdinal("DecomissionDate")),
                             
                         };
+                        //only print owner names if they are in database
                         if (!reader.IsDBNull(reader.GetOrdinal("LastName")))
                         {
                             computer.CurrentEmployee = new Employee { FirstName = reader.GetString(reader.GetOrdinal("FirstName")), LastName = reader.GetString(reader.GetOrdinal("LastName")) };
@@ -141,6 +142,7 @@ FULL JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId LEFT JOIN Employe
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
+                        //insert computer to DB
                         cmd.CommandText = @"INSERT INTO Computer ( Make, Manufacturer, PurchaseDate) 
                         OUTPUT INSERTED.Id
                         VALUES ( @Make, @Manufacturer, @PurchaseDate)";
@@ -150,7 +152,7 @@ FULL JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId LEFT JOIN Employe
                         cmd.ExecuteNonQuery();
                         int newId = (int)cmd.ExecuteScalar();
                         model.computer.Id = newId;
-
+                        //if employee is assigned, insert an entry in DB computeremployee table
                         if (model.computer.CurrentEmployee.Id != 0)
                         {
                             cmd.CommandText += @" INSERT INTO ComputerEmployee ( EmployeeId, ComputerId, AssignDate, UnassignDate) 
