@@ -87,6 +87,8 @@ namespace BangazonWorkforce.Controllers
                             Id, Name, StartDate, EndDate, MaxAttendees
                         FROM TrainingProgram
                         WHERE Id = @id
+                        LEFT JOIN EmployeeTraining ON EmployeeTraining.TrainingProgramId
+                        
                        ";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
@@ -102,6 +104,8 @@ namespace BangazonWorkforce.Controllers
                             StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
                             EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
                             MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+                            
+                            
 
                         };
                         
