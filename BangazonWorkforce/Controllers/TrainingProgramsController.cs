@@ -28,6 +28,7 @@ namespace BangazonWorkforce.Controllers
                     return new SqlConnection(_config.GetConnectionString("DefaultConnection"));
                 }
             }
+        // GET single training program and create a list when 'training programs' clicked
         // GET: TrainingProgram
         public ActionResult Index()
         {
@@ -56,8 +57,14 @@ namespace BangazonWorkforce.Controllers
                             EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
                             MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
                         };
+                        //If the Training Program has already happened dont show it on the list
+                        DateTime currentTime = DateTime.Now;
+                        if (program.StartDate > currentTime)
+                        {
+                            programs.Add(program);
+                        }
 
-                        programs.Add(program);
+                        
                     }
 
                     reader.Close();
@@ -66,7 +73,7 @@ namespace BangazonWorkforce.Controllers
                 }
             }
         }
-
+        // Details view of training programs when 'details' clicked
         // GET: TrainingProgram/Details/5
         public ActionResult Details(int id)
         {
@@ -97,6 +104,7 @@ namespace BangazonWorkforce.Controllers
                             MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
 
                         };
+                        
                     }
                     reader.Close();
 
@@ -106,14 +114,14 @@ namespace BangazonWorkforce.Controllers
             }
         }
 
-
+        // Creating a new training program 
         // GET: TrainingProgram/Create
         public ActionResult Create()
         {
             TrainingProgram trainingProgram = new TrainingProgram();
             return View(trainingProgram);
         }
-
+        // Posting the training program to the current list
         // POST: TrainingProgram/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -143,8 +151,42 @@ namespace BangazonWorkforce.Controllers
         // GET: TrainingProgram/Edit/5
         public ActionResult Edit(int id)
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                        SELECT
+                            Id, Name, StartDate, EndDate, MaxAttendees
+                        FROM TrainingProgram
+                        WHERE Id = @id
+                       ";
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    TrainingProgram program = new TrainingProgram();
+
+                    if (reader.Read())
+                    {
+                        program = new TrainingProgram
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+
+                        };
+
+                    }
+                    reader.Close();
+
+                    return View(program);
+                }
+            }
         }
+        
 
         // POST: TrainingProgram/Edit/5
         [HttpPost]
