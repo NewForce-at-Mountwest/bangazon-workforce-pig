@@ -42,7 +42,7 @@ namespace BangazonWorkforce.Controllers
                 c.PurchaseDate,
                 c.DecomissionDate, Employee.FirstName AS 'FirstName', Employee.LastName AS 'LastName'
             FROM Computer c
-JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId JOIN Employee ON ComputerEmployee.EmployeeId=Employee.Id
+FULL JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId FULL JOIN Employee ON ComputerEmployee.EmployeeId=Employee.Id
         ";
                     SqlDataReader reader = cmd.ExecuteReader();
                     //create a list of computers
@@ -59,9 +59,11 @@ JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId JOIN Employee ON Compu
                             Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer")),
                             PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
                             DecomissionDate = reader.IsDBNull(reader.GetOrdinal("DecomissionDate")) ? nullDateTime : reader.GetDateTime(reader.GetOrdinal("DecomissionDate")),
-                            CurrentEmployee = new Employee { FirstName = reader.GetString(reader.GetOrdinal("FirstName")), LastName = reader.GetString(reader.GetOrdinal("LastName")) }
-
-
+                            
+                        };
+                        if (!reader.IsDBNull(reader.GetOrdinal("LastName")))
+                        {
+                            computer.CurrentEmployee = new Employee { FirstName = reader.GetString(reader.GetOrdinal("FirstName")), LastName = reader.GetString(reader.GetOrdinal("LastName")) };
                         };
                         //add computer to the list
                         computers.Add(computer);
@@ -149,14 +151,15 @@ JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId JOIN Employee ON Compu
                         int newId = (int)cmd.ExecuteScalar();
                         model.computer.Id = newId;
 
-                        cmd.CommandText = @"INSERT INTO ComputerEmployee ( EmployeeId, ComputerId, AssignDate, UnassignDate) 
+                        if (model.computer.CurrentEmployee.Id != 0)
+                        {
+                            cmd.CommandText += @" INSERT INTO ComputerEmployee ( EmployeeId, ComputerId, AssignDate, UnassignDate) 
                         VALUES ( @EmployeeId, @ComputerId, @AssignDate, NULL)";
-                        cmd.Parameters.Add(new SqlParameter("@EmployeeId", model.computer.CurrentEmployee.Id));
-                        cmd.Parameters.Add(new SqlParameter("@ComputerId", newId));
-                        cmd.Parameters.Add(new SqlParameter("@AssignDate", DateTime.Now));
-                        //cmd.Parameters.Add(new SqlParameter("@UnassignDate", null));
-                        cmd.ExecuteNonQuery();
-
+                            cmd.Parameters.Add(new SqlParameter("@EmployeeId", model.computer.CurrentEmployee.Id));
+                            cmd.Parameters.Add(new SqlParameter("@ComputerId", newId));
+                            cmd.Parameters.Add(new SqlParameter("@AssignDate", DateTime.Now));
+                            cmd.ExecuteNonQuery();
+                        }
                         return RedirectToAction(nameof(Index));
                     }
                 }
