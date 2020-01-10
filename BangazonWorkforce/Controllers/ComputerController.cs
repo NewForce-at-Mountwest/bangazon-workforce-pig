@@ -234,7 +234,7 @@ FULL JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId LEFT JOIN Employe
                         using (SqlCommand cmd = conn.CreateCommand())
                         {
                         //find out if this computer has any associations to employees in the employeecomputer dataset
-                        cmd.CommandText = @"SELECT ComputerEmployee.ComputerId FROM ComputerEmployee WHERE ComputerEmployee.Id = @id";
+                        cmd.CommandText = @"SELECT ComputerEmployee.ComputerId FROM ComputerEmployee WHERE ComputerEmployee.ComputerId = @id";
 
                             cmd.Parameters.Add(new SqlParameter("@id", id));
                             SqlDataReader reader = cmd.ExecuteReader();
