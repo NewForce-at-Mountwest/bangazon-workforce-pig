@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using BangazonWorkforce.Models;
+using BangazonWorkforce.Models.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -39,8 +40,9 @@ namespace BangazonWorkforce.Controllers
                 c.Make,
                 c.Manufacturer,
                 c.PurchaseDate,
-                c.DecomissionDate
+                c.DecomissionDate, Employee.FirstName AS 'FirstName', Employee.LastName AS 'LastName'
             FROM Computer c
+FULL JOIN ComputerEmployee ON c.Id=ComputerEmployee.ComputerId LEFT JOIN Employee ON ComputerEmployee.EmployeeId=Employee.Id
         ";
                     SqlDataReader reader = cmd.ExecuteReader();
                     //create a list of computers
@@ -56,9 +58,14 @@ namespace BangazonWorkforce.Controllers
                             Make = reader.GetString(reader.GetOrdinal("Make")),
                             Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer")),
                             PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
-                            DecomissionDate = reader.IsDBNull(reader.GetOrdinal("DecomissionDate")) ? nullDateTime : reader.GetDateTime(reader.GetOrdinal("DecomissionDate"))
-
-                    };
+                            DecomissionDate = reader.IsDBNull(reader.GetOrdinal("DecomissionDate")) ? nullDateTime : reader.GetDateTime(reader.GetOrdinal("DecomissionDate")),
+                            
+                        };
+                        //only print owner names if they are in database
+                        if (!reader.IsDBNull(reader.GetOrdinal("LastName")))
+                        {
+                            computer.CurrentEmployee = new Employee { FirstName = reader.GetString(reader.GetOrdinal("FirstName")), LastName = reader.GetString(reader.GetOrdinal("LastName")) };
+                        };
                         //add computer to the list
                         computers.Add(computer);
                     }
@@ -115,26 +122,52 @@ namespace BangazonWorkforce.Controllers
         //NEW FORM
         public ActionResult Create()
         {
-            return View();
+            // Create a new instance of a CreateComputerViewModel
+            // If we want to get the employees, we need to use the constructor that's expecting a connection string. 
+            // When we create this instance, the constructor will run and get the employees.
+            CreateComputerViewModel computerViewModel = new CreateComputerViewModel(_config.GetConnectionString("DefaultConnection"));
+
+            // Once we've created it, we can pass it to the view
+            return View(computerViewModel);
         }
 
         // POST: Computer/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(Computer computer)
+        public ActionResult Create(CreateComputerViewModel model)
         {
             {
+                int newId = 0;
                 using (SqlConnection conn = Connection)
                 {
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"INSERT INTO Computer
-                            ( Make, Manufacturer, PurchaseDate ) VALUES ( @Make, @Manufacturer, @PurchaseDate )";
-                        cmd.Parameters.Add(new SqlParameter("@Make", computer.Make));
-                        cmd.Parameters.Add(new SqlParameter("@Manufacturer", computer.Manufacturer));
-                        cmd.Parameters.Add(new SqlParameter("@PurchaseDate", computer.PurchaseDate));
+                        //insert computer to DB
+                        cmd.CommandText = @"INSERT INTO Computer ( Make, Manufacturer, PurchaseDate) 
+                        OUTPUT INSERTED.Id
+                        VALUES ( @Make, @Manufacturer, @PurchaseDate)";
+                        cmd.Parameters.Add(new SqlParameter("@Make", model.computer.Make));
+                        cmd.Parameters.Add(new SqlParameter("@Manufacturer", model.computer.Manufacturer));
+                        cmd.Parameters.Add(new SqlParameter("@PurchaseDate", model.computer.PurchaseDate));
+                       newId = (int)cmd.ExecuteScalar();
+
+                    }
+
+                    using(SqlCommand cmd = conn.CreateCommand())
+                    {
+                        //if employee is assigned, insert an entry in DB computeremployee table
+                        if (model.computer.CurrentEmployee.Id != 0)
+                        {
+                            cmd.CommandText = @"INSERT INTO ComputerEmployee ( EmployeeId, ComputerId, AssignDate, UnassignDate) 
+                        VALUES ( @EmployeeId, @ComputerId, @AssignDate, NULL)";
+                            cmd.Parameters.Add(new SqlParameter("@EmployeeId", model.computer.CurrentEmployee.Id));
+                            cmd.Parameters.Add(new SqlParameter("@ComputerId", newId));
+                            cmd.Parameters.Add(new SqlParameter("@AssignDate", DateTime.Now));
+                        
                         cmd.ExecuteNonQuery();
+                            }
+
 
                         return RedirectToAction(nameof(Index));
                     }
@@ -201,7 +234,7 @@ namespace BangazonWorkforce.Controllers
                         using (SqlCommand cmd = conn.CreateCommand())
                         {
                         //find out if this computer has any associations to employees in the employeecomputer dataset
-                        cmd.CommandText = @"SELECT ComputerEmployee.ComputerId FROM ComputerEmployee WHERE ComputerEmployee.Id = @id";
+                        cmd.CommandText = @"SELECT ComputerEmployee.ComputerId FROM ComputerEmployee WHERE ComputerEmployee.ComputerId = @id";
 
                             cmd.Parameters.Add(new SqlParameter("@id", id));
                             SqlDataReader reader = cmd.ExecuteReader();
@@ -238,7 +271,7 @@ namespace BangazonWorkforce.Controllers
                 }
                 else
                 {
-                    return View();
+                    return RedirectToAction(nameof(Index));
                 }
                
             }
