@@ -8,6 +8,7 @@ using BangazonWorkforce.Models.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+//Lance is Stupid and his Breath smells like old cheese
 namespace BangazonWorkforce.Controllers
 {
     public class EmployeeController : Controller
@@ -82,9 +83,9 @@ namespace BangazonWorkforce.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT  Employee.Id AS 'Id', FirstName, 
+                    cmd.CommandText = @"SELECT  Employee.Id AS 'Id', FirstName,
 LastName, Department.Name AS 'DeptName', isSupervisor ,  Computer.Make AS 'Make', TrainingProgram.Id AS 'TPID', TrainingProgram.Name AS 'TrainingName', Computer.Manufacturer AS 'Manufacturer'
-FROM Employee  
+FROM Employee
  JOIN Department ON DepartmentId = Department.Id FULL Join ComputerEmployee ON Employee.Id = ComputerEmployee.EmployeeId  FUll JOIN Computer ON Computer.Id = ComputerId
 LEFT Join EmployeeTraining ON Employee.Id = EmployeeTraining.EmployeeId LEFT Join TrainingProgram ON TrainingProgram.Id = TrainingProgramId WHERE Employee.Id = @Id";
                     cmd.Parameters.Add(new SqlParameter("@Id", id));
