@@ -11,7 +11,7 @@ namespace BangazonWorkforce.Controllers
 {
     public class DepartmentsController : Controller
     {
-        //Making a connection to our SQL server
+        //Making connection to server
         private readonly IConfiguration _config;
         public DepartmentsController(IConfiguration config)
         {
@@ -54,7 +54,7 @@ namespace BangazonWorkforce.Controllers
                             Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
                             Employees = new List<Employee>()
                         };
-                        //If the reader picks up nothing in the Employee List, Add the Employees
+                        //Add the Employees
                         if (!reader.IsDBNull(reader.GetOrdinal("Employee Id")))
                         {
                             Employee employee = new Employee()
@@ -78,7 +78,7 @@ namespace BangazonWorkforce.Controllers
                                 departments.Add(department);
                             }
                         }
-                        //Add A Department of 0 to an new employee if not assigned to one so the App doesnt break
+                       
                         else if (department.Employees.Count() == 0)
                         {
                             departments.Add(department);
@@ -122,7 +122,7 @@ namespace BangazonWorkforce.Controllers
                                 Employees = new List<Employee>()
                             };
                         };
-                        // If the Employee Id is coming back as nothing, add Employees to the Employee List
+                        // add Employees to Employee List
                         if (!reader.IsDBNull(reader.GetOrdinal("Employee Id")))
                         {
                             Employee employee = new Employee()
