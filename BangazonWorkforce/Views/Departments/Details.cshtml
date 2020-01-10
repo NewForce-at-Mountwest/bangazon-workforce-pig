@@ -1,42 +1,32 @@
 ﻿@model BangazonWorkforce.Models.Department
-
 @{
     ViewData["Title"] = "Details";
 }
-
-<h1>Details</h1>
-
+<h1>@Html.DisplayFor(model => model.Name)</h1>
 <div>
     <h4>Department</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Id)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Budget)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Budget)
         </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.NumberOfEmployees)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.NumberOfEmployees)
+        <dt class="col-sm-2">Employees</dt>
+        <dd>
+            <ul class="list-unstyled">
+                @foreach (Employee employee in Model.Employees)
+                {
+                    <li>
+                        @Html.DisplayFor(model => employee.FirstName) @Html.DisplayFor(model => employee.LastName)
+                    </li>
+                }
+            </ul>
         </dd>
     </dl>
 </div>
 <div>
-    @Html.ActionLink("Edit", "Edit", new { id = Model.Id }) |
+    @Html.ActionLink("Edit", "Edit", new {  id = Model.Id }) |
     <a asp-action="Index">Back to List</a>
 </div>

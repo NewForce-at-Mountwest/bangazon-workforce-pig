@@ -1,26 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using System.Data.SqlClient;
 using BangazonWorkforce.Models;
-
-
 namespace BangazonWorkforce.Controllers
 {
     public class DepartmentsController : Controller
     {
-
+        //Making a connection to our SQL server
         private readonly IConfiguration _config;
-
         public DepartmentsController(IConfiguration config)
         {
             _config = config;
         }
-
         public SqlConnection Connection
         {
             get
@@ -28,7 +24,7 @@ namespace BangazonWorkforce.Controllers
                 return new SqlConnection(_config.GetConnectionString("DefaultConnection"));
             }
         }
-        // GET: Departments
+        // GET: Department
         public ActionResult Index()
         {
             using (SqlConnection conn = Connection)
@@ -37,246 +33,176 @@ namespace BangazonWorkforce.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
-                     SELECT
-                    COUNT(e.FirstName) as NumberOfEmployees,
-                    d.Id,
+                     SELECT d.Id AS 'Department Id',
                      d.Name,
-                    d.Budget
-                    FROM Department d
-                    LEFT JOIN Employee e ON e.DepartmentId = d.Id
-                    GROUP by d.Name, d.Budget , d.Id";
-
+                     d.Budget,
+                     e.Id AS 'Employee Id',
+                     e.FirstName,
+                     e.LastName,
+                     e.DepartmentId
+                     FROM Department d
+                     LEFT JOIN Employee e ON e.DepartmentId = d.Id
+                ";
                     SqlDataReader reader = cmd.ExecuteReader();
-
                     List<Department> departments = new List<Department>();
-
                     while (reader.Read())
                     {
-                        Department department = new Department()
+                        Department department = new Department
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Id = reader.GetInt32(reader.GetOrdinal("Department Id")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
-                            NumberOfEmployees = reader.GetInt32(reader.GetOrdinal("NumberOfEmployees"))
+                            Employees = new List<Employee>()
                         };
-                        departments.Add(department);
+                        //If the reader picks up nothing in the Employee List, Add the Employees
+                        if (!reader.IsDBNull(reader.GetOrdinal("Employee Id")))
+                        {
+                            Employee employee = new Employee()
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Employee Id")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId"))
+                            };
+                            if (departments.Any(d => d.Id == department.Id))
+                            {
+                                Department departmentToReference = departments.Where(d => d.Id == department.Id).FirstOrDefault();
+                                if (!departmentToReference.Employees.Any(s => s.Id == employee.Id))
+                                {
+                                    departmentToReference.Employees.Add(employee);
+                                }
+                            }
+                            else
+                            {
+                                department.Employees.Add(employee);
+                                departments.Add(department);
+                            }
+                        }
+                        //Add A Department of 0 to an new employee if not assigned to one so the App doesnt break
+                        else if (department.Employees.Count() == 0)
+                        {
+                            departments.Add(department);
+                        };
                     }
                     reader.Close();
                     return View(departments);
                 }
-
             }
         }
-
-        // GET: Departments/Details/5
+        // GET: Department/Details/5
         public ActionResult Details(int id)
         {
-
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"
-                        SELECT
-                            Id, Name, Budget
-                        FROM Department
-                        WHERE Id = @id";
+                    cmd.CommandText = @" SELECT d.Id AS 'Department Id',
+                                         d.Name,
+                                         d.Budget,
+                                         e.Id AS 'Employee Id',
+                                         e.FirstName,
+                                         e.LastName,
+                                         e.DepartmentId
+                                         FROM Department d
+                                         FULL JOIN Employee e ON e.DepartmentId = d.Id
+                                         WHERE d.Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
-
-                    Department department = new Department();
-
-                    if (reader.Read())
+                    Department department = null;
+                    while (reader.Read())
                     {
-                        department = new Department
+                        if (department == null)
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            Budget = reader.GetInt32(reader.GetOrdinal("Budget"))
-
+                            department = new Department
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Department Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
+                                Employees = new List<Employee>()
+                            };
                         };
+                        // If the Employee Id is coming back as nothing, add Employees to the Employee List
+                        if (!reader.IsDBNull(reader.GetOrdinal("Employee Id")))
+                        {
+                            Employee employee = new Employee()
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Employee Id")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId"))
+                            };
+                            department.Employees.Add(employee);
+                        }
                     }
+
                     reader.Close();
-
-
                     return View(department);
+
                 }
             }
         }
 
-        //GET: Departments/Create
+        // GET: Department/Create
         public ActionResult Create()
         {
             return View();
         }
-
-        // POST: Departments/Create
+        // POST: Department/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create(Department department)
+        public ActionResult Create(Department department)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"INSERT INTO Department
+                                            (Name, Budget)
+                                            VALUES
+                                            (@name, @budget)";
+                    cmd.Parameters.Add(new SqlParameter("@name", department.Name));
+                    cmd.Parameters.Add(new SqlParameter("@budget", department.Budget));
+
+                    cmd.ExecuteNonQuery();
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+        }
+        // GET: Department/Edit/5
+        public ActionResult Edit(int id)
+        {
+            return View();
+        }
+        // POST: Department/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Edit(int id, IFormCollection collection)
         {
             try
             {
-                using (SqlConnection conn = Connection)
-                {
-                    conn.Open();
-                    using (SqlCommand cmd = conn.CreateCommand())
-                    {
-                        cmd.CommandText = @"INSERT INTO Department (Name, Budget)
-                                                    VALUES (@Name, @Budget)";
 
-                        cmd.Parameters.Add(new SqlParameter("@Name", department.Name));
-                        cmd.Parameters.Add(new SqlParameter("@Budget", department.Budget));
-
-                        await cmd.ExecuteNonQueryAsync();
-
-                        return RedirectToAction(nameof(Index));
-                    }
-                }
+                return RedirectToAction(nameof(Index));
             }
             catch
             {
                 return View();
             }
         }
-
-        // GET: Departments/Edit/5
-        public ActionResult Edit(int id)
-        {
-            using (SqlConnection conn = Connection)
-            {
-                conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = @"
-                        SELECT
-                            Id, Name, Budget
-                        FROM Department
-                        WHERE Id = @id";
-                    cmd.Parameters.Add(new SqlParameter("@id", id));
-                    SqlDataReader reader = cmd.ExecuteReader();
-
-                    Department department = new Department();
-
-                    if (reader.Read())
-                    {
-                        department = new Department
-                        {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            Budget = reader.GetInt32(reader.GetOrdinal("Budget"))
-
-                        };
-                    }
-                    reader.Close();
-
-                    return View(department);
-                }
-            }
-        }
-
-        // POST: Departments/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, Department department)
-        {
-            try
-            {
-                using (SqlConnection conn = Connection)
-                {
-                    conn.Open();
-                    using (SqlCommand cmd = conn.CreateCommand())
-                    {
-                        cmd.CommandText = @"UPDATE Department
-                                            SET Name=@Name, 
-                                            Budget=@Budget
-                                            WHERE Id = @id";
-                        cmd.Parameters.Add(new SqlParameter("@Name", department.Name));
-                        cmd.Parameters.Add(new SqlParameter("@Budget", department.Budget));
-                        cmd.Parameters.Add(new SqlParameter("@id", id));
-
-                        int rowsAffected = cmd.ExecuteNonQuery();
-
-
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View(department);
-            }
-        }
-
-        // GET: Departments/Delete/5
+        // GET: Department/Delete/5
         public ActionResult Delete(int id)
         {
-            using (SqlConnection conn = Connection)
-            {
-                conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = @"
-                        SELECT
-                            Id, Name, Budget
-                        FROM Department
-                        WHERE Id = @id";
-                    cmd.Parameters.Add(new SqlParameter("@id", id));
-                    SqlDataReader reader = cmd.ExecuteReader();
-
-                    Department Department = null;
-
-                    if (reader.Read())
-                    {
-                        Department = new Department
-                        {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            Budget = reader.GetInt32(reader.GetOrdinal("Budget"))
-
-                        };
-                    }
-                    reader.Close();
-
-                    return View(Department);
-                }
-            }
+            return View();
         }
-
-        // POST: Students/Delete/5
+        // POST: Department/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Delete(int id, IFormCollection collection)
         {
             try
             {
-
-                using (SqlConnection conn = Connection)
-                {
-                    conn.Open();
-                    using (SqlCommand cmd = conn.CreateCommand())
-                    {
-                        cmd.CommandText = @"DELETE FROM StudentExercise WHERE studentId = @id";
-                        cmd.Parameters.Add(new SqlParameter("@id", id));
-
-                        int rowsAffected = cmd.ExecuteNonQuery();
-
-                    }
-                }
-                using (SqlConnection conn = Connection)
-                {
-                    conn.Open();
-                    using (SqlCommand cmd = conn.CreateCommand())
-                    {
-                        cmd.CommandText = @"DELETE FROM Student WHERE Id = @id";
-                        cmd.Parameters.Add(new SqlParameter("@id", id));
-
-                        int rowsAffected = cmd.ExecuteNonQuery();
-
-                    }
-                }
-
+                // TODO: Add delete logic here
                 return RedirectToAction(nameof(Index));
             }
             catch
